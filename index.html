@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRPF अँप्लिकेशन</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #3B82F6;
+            min-height: 100vh;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-md mx-auto glass-effect rounded-xl p-6 shadow-lg">
+        <h1 class="text-3xl font-bold text-white text-center mb-8">SRPF अँप्लिकेशन</h1>
+
+        <!-- Registration Form -->
+        <div id="registration" class="space-y-4">
+            <h2 class="text-2xl font-semibold text-white mb-4">रजिस्ट्रेशन</h2>
+            <input type="text" id="mobile" placeholder="मोबाइल नंबर" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="password" id="password" placeholder="पासवर्ड" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button onclick="register()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300">रजिस्टर करा</button>
+        </div>
+
+        <!-- Information Form -->
+        <div id="form" class="space-y-4 hidden">
+            <h2 class="text-2xl font-semibold text-white mb-4">अधिकारी माहिती</h2>
+            <input type="text" id="name" placeholder="पूर्ण नाव" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="text" id="designation" placeholder="पद" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="text" id="buckleNo" placeholder="बक्कल नंबर" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="text" id="residenceNo" placeholder="शासकीय निवासस्थान क्रमांक (optional)" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <input type="text" id="contact" placeholder="संपर्क क्रमांक" class="w-full p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button onclick="submitForm()" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition duration-300">सबमिट करा</button>
+        </div>
+
+        <!-- Search Function -->
+        <div id="search" class="mt-8 space-y-4">
+            <h2 class="text-2xl font-semibold text-white mb-4">सर्च</h2>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" placeholder="मोबाइल नंबर, नाव, किंवा बक्कल नंबर" class="flex-1 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <button onclick="searchData()" class="bg-yellow-500 text-white px-6 rounded-lg hover:bg-yellow-600 transition duration-300">सर्च</button>
+            </div>
+            <div id="searchResults" class="mt-4 space-y-2 text-white"></div>
+        </div>
+    </div>
+
+    <script>
+        let registeredUsers = [];
+        let officersData = [];
+
+        function register() {
+            const mobile = document.getElementById('mobile').value;
+            const password = document.getElementById('password').value;
+
+            if (mobile && password) {
+                registeredUsers.push({ mobile, password });
+                alert('रजिस्ट्रेशन यशस्वी!');
+                document.getElementById('registration').style.display = 'none';
+                document.getElementById('form').style.display = 'block';
+            } else {
+                alert('कृपया मोबाइल नंबर आणि पासवर्ड प्रविष्ट करा.');
+            }
+        }
+
+        function submitForm() {
+            const name = document.getElementById('name').value;
+            const designation = document.getElementById('designation').value;
+            const buckleNo = document.getElementById('buckleNo').value;
+            const residenceNo = document.getElementById('residenceNo').value;
+            const contact = document.getElementById('contact').value;
+
+            if (name && designation && buckleNo && contact) {
+                const officer = {
+                    name,
+                    designation,
+                    buckleNo,
+                    residenceNo,
+                    contact,
+                };
+                officersData.push(officer);
+                saveToExcel(officer);
+                alert('माहिती सबमिट झाली!');
+                clearForm();
+            } else {
+                alert('कृपया सर्व फील्ड भरा.');
+            }
+        }
+
+        function saveToExcel(data) {
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Officers');
+
+            sheet.addRow(['नाव', 'पद', 'बक्कल नंबर', 'निवासस्थान क्रमांक', 'संपर्क क्रमांक']);
+            sheet.addRow([data.name, data.designation, data.buckleNo, data.residenceNo, data.contact]);
+
+            workbook.xlsx.writeBuffer().then((buffer) => {
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'officers_data.xlsx';
+                link.click();
+            });
+
+            localStorage.setItem('officersData', JSON.stringify(officersData));
+        }
+
+        function searchData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const results = officersData.filter(
+                (officer) =>
+                    officer.name.toLowerCase().includes(searchTerm) ||
+                    officer.buckleNo.includes(searchTerm) ||
+                    officer.contact.includes(searchTerm)
+            );
+
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '';
+
+            if (results.length > 0) {
+                results.forEach((result) => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 bg-white/10 rounded-lg';
+                    div.textContent = `नाव: ${result.name}, पद: ${result.designation}, बक्कल नंबर: ${result.buckleNo}, संपर्क: ${result.contact}`;
+                    searchResults.appendChild(div);
+                });
+            } else {
+                searchResults.innerHTML = '<div class="p-4 bg-white/10 rounded-lg">निकाल आढळला नाही.</div>';
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('designation').value = '';
+            document.getElementById('buckleNo').value = '';
+            document.getElementById('residenceNo').value = '';
+            document.getElementById('contact').value = '';
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
